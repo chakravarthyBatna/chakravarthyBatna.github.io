@@ -22,20 +22,137 @@ function setupThemeToggle() {
   });
 }
 
-// The "How I work" cards lean toward the cursor.
+// Cards lean toward the cursor, their titles lift off the surface, and a soft light follows the mouse.
 function setupCardTilt() {
+  const cards = document.querySelectorAll('.project, .stats > div, .skills > div, .steps li');
+  cards.forEach((card) => card.classList.add('tilt'));
   if (reduceMotion || coarsePointer) return;
-  const maxTilt = 7;
-  document.querySelectorAll('.steps li').forEach((card) => {
+  const maxTilt = 8;
+  cards.forEach((card) => {
     card.addEventListener('pointermove', (event) => {
       const rect = card.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-      card.style.transform = `rotateX(${(-y * maxTilt).toFixed(2)}deg) rotateY(${(x * maxTilt).toFixed(2)}deg) translateZ(6px)`;
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+      card.style.transform = `rotateX(${((0.5 - y) * maxTilt).toFixed(2)}deg) rotateY(${((x - 0.5) * maxTilt).toFixed(2)}deg) translateZ(8px)`;
+      card.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+      card.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
     });
     card.addEventListener('pointerleave', () => {
       card.style.transform = '';
     });
+  });
+}
+
+// Each section tilts up into place the first time it scrolls into view.
+function setupSectionReveal() {
+  if (reduceMotion || !('IntersectionObserver' in window)) return;
+  const sections = document.querySelectorAll('.block');
+  root.classList.add('js-reveal');
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add('in-view');
+      observer.unobserve(entry.target);
+    }
+  }, { threshold: 0.08, rootMargin: '0px 0px -8% 0px' });
+  sections.forEach((section) => observer.observe(section));
+}
+
+// Low-poly shapes float behind the whole page. Scrolling moves the camera down through them
+// and the mouse shifts the view a little, so the page itself feels like a 3D space.
+function setupBackground() {
+  if (reduceMotion) return;
+  const host = document.getElementById('bg3d');
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  } catch (e) {
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  host.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(0, 0, 14);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  key.position.set(4, 6, 8);
+  scene.add(key);
+
+  const layers = ['--c-edge', '--c-service', '--c-data', '--c-async', '--c-ai'];
+  const shapes = [
+    new THREE.BoxGeometry(1.1, 1.1, 1.1),
+    new THREE.IcosahedronGeometry(0.8, 0),
+    new THREE.OctahedronGeometry(0.85, 0),
+    new THREE.CylinderGeometry(0.6, 0.6, 1.1, 24),
+    new THREE.TorusGeometry(0.6, 0.2, 12, 32),
+  ];
+  const DEPTH = 60;
+  const count = coarsePointer ? 16 : 34;
+  const floaters = [];
+  for (let i = 0; i < count; i += 1) {
+    const geometry = shapes[i % shapes.length];
+    const material = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.2, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(geometry, material);
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), new THREE.LineBasicMaterial({ transparent: true }));
+    mesh.add(edges);
+    // Shapes sit far back so they read as depth, not as clutter behind the text.
+    const side = i % 2 === 0 ? -1 : 1;
+    mesh.position.set(side * THREE.MathUtils.randFloat(6, 24), -Math.random() * DEPTH + 4, THREE.MathUtils.randFloat(-26, -12));
+    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+    mesh.scale.setScalar(THREE.MathUtils.randFloat(0.6, 1.3));
+    mesh.userData = { layer: layers[i % layers.length], spin: THREE.MathUtils.randFloat(0.1, 0.35), bob: Math.random() * Math.PI * 2, baseY: mesh.position.y, edges };
+    scene.add(mesh);
+    floaters.push(mesh);
+  }
+
+  function applyTheme() {
+    const light = root.dataset.theme === 'light';
+    for (const mesh of floaters) {
+      const color = cssColor(mesh.userData.layer);
+      mesh.material.color.copy(color);
+      mesh.material.opacity = light ? 0.12 : 0.18;
+      mesh.userData.edges.material.color.copy(color);
+      mesh.userData.edges.material.opacity = light ? 0.25 : 0.32;
+    }
+  }
+
+  function resize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  }
+
+  const mouse = { x: 0, y: 0 };
+  window.addEventListener('pointermove', (event) => {
+    mouse.x = event.clientX / window.innerWidth - 0.5;
+    mouse.y = event.clientY / window.innerHeight - 0.5;
+  }, { passive: true });
+
+  applyTheme();
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('themechange', applyTheme);
+
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(() => {
+    const dt = Math.min(clock.getDelta(), 0.05);
+    if (document.hidden) return;
+    const elapsed = clock.elapsedTime;
+    const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const progress = window.scrollY / scrollable;
+    const targetY = -progress * (DEPTH - 8);
+    camera.position.y += (targetY + -mouse.y * 1.2 - camera.position.y) * Math.min(1, dt * 4);
+    camera.position.x += (mouse.x * 2.4 - camera.position.x) * Math.min(1, dt * 3);
+    camera.lookAt(camera.position.x * 0.3, camera.position.y, 0);
+    for (const mesh of floaters) {
+      mesh.rotation.x += dt * mesh.userData.spin;
+      mesh.rotation.y += dt * mesh.userData.spin * 0.8;
+      mesh.position.y = mesh.userData.baseY + Math.sin(elapsed * 0.5 + mesh.userData.bob) * 0.4;
+    }
+    renderer.render(scene, camera);
   });
 }
 
@@ -710,4 +827,6 @@ function setupScene() {
 // Start up once every constant above is defined.
 setupThemeToggle();
 setupCardTilt();
+setupSectionReveal();
+setupBackground();
 setupScene();

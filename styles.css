@@ -71,15 +71,19 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-body {
-  margin: 0;
+/* Page color and soft colored light live on <html>, so the fixed 3D layer can sit between them and the content. */
+html {
   background-color: var(--bg);
-  /* Soft colored light behind the whole page. */
   background-image:
     radial-gradient(900px 600px at 8% -5%, var(--blob-1), transparent 70%),
     radial-gradient(800px 600px at 100% 20%, var(--blob-2), transparent 70%),
     radial-gradient(900px 700px at 40% 110%, var(--blob-3), transparent 70%);
   background-attachment: fixed;
+}
+
+body {
+  margin: 0;
+  background: transparent;
   color: var(--text);
   font-family: "IBM Plex Sans", system-ui, sans-serif;
   font-size: 1.125rem;
@@ -119,6 +123,19 @@ a {
 
 .skip:focus {
   top: 12px;
+}
+
+/* 3D background behind the whole page */
+
+.bg3d {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.bg3d canvas {
+  display: block;
 }
 
 /* Top bar */
@@ -167,6 +184,17 @@ a {
 
 .topbar nav a:hover {
   color: var(--text);
+}
+
+.nav-resume {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .theme-toggle {
@@ -467,6 +495,62 @@ a {
   .hint-tap {
     display: none;
   }
+}
+
+/* Sections tilt up into place the first time they scroll into view. */
+
+.js-reveal .block {
+  opacity: 0;
+  transform: perspective(1400px) rotateX(12deg) translateY(48px);
+  transform-origin: 50% 0;
+  transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.js-reveal .block.in-view {
+  opacity: 1;
+  transform: none;
+}
+
+/* Cards tilt toward the cursor; titles lift off the surface and a light follows the mouse. */
+
+.projects,
+.stats,
+.skills,
+.steps {
+  perspective: 1100px;
+}
+
+.tilt {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.25s ease-out, border-color 0.25s ease;
+  will-change: transform;
+}
+
+.tilt > h3,
+.tilt > h4,
+.tilt > dt {
+  transform: translateZ(26px);
+}
+
+.tilt > .tags,
+.tilt > dd {
+  transform: translateZ(14px);
+}
+
+.tilt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.09), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tilt:hover::after {
+  opacity: 1;
 }
 
 /* Content blocks */
@@ -821,10 +905,6 @@ p.prose {
     padding-top: 84px;
   }
 
-  .hero-stage {
-    order: -1;
-  }
-
   .stage {
     height: 62svh;
     min-height: 440px;
@@ -877,7 +957,7 @@ p.prose {
     display: none;
   }
 
-  .theme-toggle {
+  .nav-resume {
     margin-left: auto;
   }
 }
