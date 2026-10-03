@@ -249,13 +249,65 @@ a {
 }
 
 .node-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
   padding: 2px 8px;
+  border: 1px solid transparent;
   border-radius: 6px;
   background: color-mix(in srgb, var(--bg) 70%, transparent);
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.node-desc {
+  display: none;
+  max-width: 190px;
+  margin-top: 2px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+  text-align: center;
+  color: var(--muted);
+}
+
+.node-label.is-active {
+  z-index: 5;
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.node-label.is-active .node-desc {
+  display: block;
+}
+
+.name-short {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .node-label {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .name-full {
+    display: none;
+  }
+
+  .name-short {
+    display: inline;
+  }
+
+  .node-desc {
+    max-width: 150px;
+    font-size: 11px;
+  }
 }
 
 .hero-stage figcaption {
@@ -275,6 +327,10 @@ a {
 @media (pointer: fine) {
   .hint-drag {
     display: inline;
+  }
+
+  .hint-tap {
+    display: none;
   }
 }
 
@@ -321,15 +377,22 @@ p.prose {
   margin: 0 0 32px;
   padding: 0;
   max-width: 820px;
+  perspective: 900px;
 }
 
 .steps li {
   counter-increment: step;
+  transition: transform 0.25s ease-out, border-color 0.25s ease;
+  will-change: transform;
   position: relative;
   padding: 20px 20px 20px 64px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
+}
+
+.steps li:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
 }
 
 .steps li::before {
