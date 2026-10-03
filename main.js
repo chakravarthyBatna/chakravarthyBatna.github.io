@@ -63,7 +63,8 @@ function setupSectionReveal() {
 // Low-poly shapes float behind the whole page. Scrolling moves the camera down through them
 // and the mouse shifts the view a little, so the page itself feels like a 3D space.
 function setupBackground() {
-  if (reduceMotion) return;
+  const wideScreen = matchMedia('(min-width: 901px)');
+  if (reduceMotion || (coarsePointer && !wideScreen.matches)) return;
   const host = document.getElementById('bg3d');
   let renderer;
   try {
@@ -200,38 +201,169 @@ function setupBackground() {
     };
   }
 
+  function cloud(mat, edge) {
+    const group = new THREE.Group();
+    [[0, 0, 0, 0.55], [-0.55, -0.12, 0, 0.4], [0.55, -0.1, 0, 0.42], [0.2, 0.3, 0, 0.38]].forEach(([x, y, z, r]) => {
+      const puff = solid(new THREE.SphereGeometry(r, 18, 14), mat, edge, { edges: false });
+      puff.position.set(x, y, z);
+      group.add(puff);
+    });
+    return group;
+  }
+
+  function accessKey(mat, edge) {
+    const group = new THREE.Group();
+    const ring = solid(new THREE.TorusGeometry(0.32, 0.1, 10, 24), mat, edge, { edges: false });
+    ring.position.x = -0.65;
+    group.add(ring);
+    const shaft = solid(new THREE.BoxGeometry(1.1, 0.14, 0.14), mat, edge);
+    shaft.position.x = 0.2;
+    group.add(shaft);
+    [0.45, 0.68].forEach((x) => {
+      const tooth = solid(new THREE.BoxGeometry(0.12, 0.26, 0.14), mat, edge);
+      tooth.position.set(x, -0.18, 0);
+      group.add(tooth);
+    });
+    return group;
+  }
+
+  function bug(mat, edge) {
+    const group = new THREE.Group();
+    const body = solid(new THREE.SphereGeometry(0.42, 18, 14), mat, edge, { edges: false });
+    body.scale.set(1, 1.35, 0.8);
+    group.add(body);
+    const head = solid(new THREE.SphereGeometry(0.24, 14, 12), mat, edge, { edges: false });
+    head.position.y = 0.7;
+    group.add(head);
+    const leg = new THREE.CylinderGeometry(0.035, 0.035, 0.7, 6);
+    [-0.25, 0.05, 0.35].forEach((y) => {
+      [-1, 1].forEach((side) => {
+        const mesh = solid(leg, mat, edge, { edges: false });
+        mesh.position.set(side * 0.55, y, 0);
+        mesh.rotation.z = side * (Math.PI / 2 - 0.35);
+        group.add(mesh);
+      });
+    });
+    [-1, 1].forEach((side) => {
+      const antenna = solid(new THREE.CylinderGeometry(0.025, 0.025, 0.45, 6), mat, edge, { edges: false });
+      antenna.position.set(side * 0.16, 1.05, 0);
+      antenna.rotation.z = -side * 0.5;
+      group.add(antenna);
+    });
+    return group;
+  }
+
+  function coffee(mat, edge) {
+    const group = new THREE.Group();
+    group.add(solid(new THREE.CylinderGeometry(0.48, 0.4, 0.95, 28), mat, edge));
+    const handle = solid(new THREE.TorusGeometry(0.24, 0.07, 10, 20), mat, edge, { edges: false });
+    handle.position.x = 0.5;
+    group.add(handle);
+    return group;
+  }
+
+  function laptop(mat, edge) {
+    const group = new THREE.Group();
+    group.add(solid(new THREE.BoxGeometry(1.7, 0.08, 1.15), mat, edge));
+    const screen = solid(new THREE.BoxGeometry(1.7, 1.1, 0.06), mat, edge);
+    screen.position.set(0, 0.55, -0.62);
+    screen.rotation.x = -0.25;
+    group.add(screen);
+    return group;
+  }
+
+  function shield(mat, edge) {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0.95);
+    shape.quadraticCurveTo(0.45, 0.85, 0.75, 0.7);
+    shape.quadraticCurveTo(0.75, -0.3, 0, -0.95);
+    shape.quadraticCurveTo(-0.75, -0.3, -0.75, 0.7);
+    shape.quadraticCurveTo(-0.45, 0.85, 0, 0.95);
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.22, bevelEnabled: false });
+    geometry.center();
+    const group = new THREE.Group();
+    group.add(solid(geometry, mat, edge));
+    return group;
+  }
+
+  function chip(mat, edge) {
+    const group = new THREE.Group();
+    group.add(solid(new THREE.BoxGeometry(1.0, 1.0, 0.18), mat, edge));
+    const pin = new THREE.BoxGeometry(0.08, 0.22, 0.06);
+    [-0.3, -0.1, 0.1, 0.3].forEach((p) => {
+      [[p, 0.6, 0], [p, -0.6, 0], [0.6, p, Math.PI / 2], [-0.6, p, Math.PI / 2]].forEach(([x, y, rz]) => {
+        const mesh = solid(pin, mat, edge, { edges: false });
+        mesh.position.set(x, y, 0);
+        mesh.rotation.z = rz;
+        group.add(mesh);
+      });
+    });
+    return group;
+  }
+
+  function documentFile(mat, edge) {
+    const group = new THREE.Group();
+    group.add(solid(new THREE.BoxGeometry(1.0, 1.3, 0.06), mat, edge));
+    const line = new THREE.BoxGeometry(0.6, 0.06, 0.08);
+    [0.35, 0.15, -0.05, -0.25].forEach((y, i) => {
+      const mesh = solid(line, mat, edge, { edges: false });
+      mesh.position.set(i === 3 ? -0.1 : 0, y, 0.04);
+      mesh.scale.x = i === 3 ? 0.6 : 1;
+      group.add(mesh);
+    });
+    return group;
+  }
+
   const layers = ['--c-edge', '--c-service', '--c-data', '--c-async', '--c-ai'];
+  // Every object appears once.
   const builders = [
-    codeSymbol('{ }'), gear, codeSymbol('</>'), database, padlock, codeSymbol('=>'),
-    server, terminal, codeSymbol('( )'), gitBranch, codeSymbol('[ ]'), codeSymbol('&&'), codeSymbol(';'),
+    codeSymbol('{ }'), bug, codeSymbol('</>'), database, padlock, codeSymbol('=>'),
+    server, terminal, codeSymbol('( )'), gitBranch, accessKey, codeSymbol('[ ]'),
+    cloud, codeSymbol('&&'), shield, coffee, codeSymbol('//'), laptop,
+    gear, codeSymbol('!='), chip, codeSymbol(';'), documentFile, codeSymbol('++'),
+    codeSymbol('01'), codeSymbol('#'),
   ];
   const DEPTH = 60;
-  const count = coarsePointer ? 16 : 34;
   const floaters = [];
 
+  // Objects live only in the side margins, never behind the text and cards in the middle.
+  // `edge` is how far out toward the screen edge an object sits (1 = at the edge).
+  function placeInMargin(object) {
+    const { side, edge } = object.userData;
+    const distance = camera.position.z - object.position.z;
+    const halfWidth = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * distance * camera.aspect;
+    object.position.x = side * halfWidth * edge;
+  }
+
   function populate(font) {
-    for (let i = 0; i < count; i += 1) {
+    const perSide = Math.ceil(builders.length / 2);
+    builders.forEach((build, i) => {
       const material = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.2, transparent: true, depthWrite: false });
       const edgeMaterial = new THREE.LineBasicMaterial({ transparent: true });
-      const object = builders[i % builders.length](material, edgeMaterial, font);
-      if (!object.children.length) continue;
-      // Objects sit far back so they read as depth, not as clutter behind the text.
+      const object = build(material, edgeMaterial, font);
+      if (!object.children.length) return;
       const side = i % 2 === 0 ? -1 : 1;
-      object.position.set(side * THREE.MathUtils.randFloat(6, 24), -Math.random() * DEPTH + 4, THREE.MathUtils.randFloat(-26, -12));
-      object.rotation.set(THREE.MathUtils.randFloatSpread(0.6), Math.random() * Math.PI * 2, THREE.MathUtils.randFloatSpread(0.4));
-      object.scale.setScalar(THREE.MathUtils.randFloat(1.2, 1.9));
+      const slot = Math.floor(i / 2);
+      // Spread each side's objects evenly down the page so they never bunch up.
+      const y = 3 - (slot + 0.5) * (DEPTH / perSide) + THREE.MathUtils.randFloatSpread(1.5);
+      object.position.set(0, y, THREE.MathUtils.randFloat(-20, -12));
+      object.rotation.set(THREE.MathUtils.randFloatSpread(0.5), Math.random() * Math.PI * 2, THREE.MathUtils.randFloatSpread(0.3));
+      object.scale.setScalar(THREE.MathUtils.randFloat(1.3, 1.7));
       object.userData = {
         layer: layers[i % layers.length],
         material,
         edgeMaterial,
-        spin: THREE.MathUtils.randFloat(0.15, 0.4) * (Math.random() < 0.5 ? -1 : 1),
+        side,
+        edge: THREE.MathUtils.randFloat(0.9, 0.95),
+        spin: THREE.MathUtils.randFloat(0.15, 0.35) * (Math.random() < 0.5 ? -1 : 1),
         bob: Math.random() * Math.PI * 2,
-        baseY: object.position.y,
+        baseY: y,
         baseTilt: object.rotation.x,
       };
+      placeInMargin(object);
       scene.add(object);
       floaters.push(object);
-    }
+    });
     applyTheme();
   }
 
@@ -258,6 +390,7 @@ function setupBackground() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    floaters.forEach(placeInMargin);
   }
 
   const mouse = { x: 0, y: 0 };
@@ -274,14 +407,15 @@ function setupBackground() {
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.05);
-    if (document.hidden) return;
+    // On narrow screens the content fills the width, so the background is hidden and paused.
+    if (document.hidden || wideScreen.matches === false) return;
     const elapsed = clock.elapsedTime;
     const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     const progress = window.scrollY / scrollable;
     const targetY = -progress * (DEPTH - 8);
     camera.position.y += (targetY + -mouse.y * 1.2 - camera.position.y) * Math.min(1, dt * 4);
-    camera.position.x += (mouse.x * 2.4 - camera.position.x) * Math.min(1, dt * 3);
-    camera.lookAt(camera.position.x * 0.3, camera.position.y, 0);
+    camera.position.x += (mouse.x * 0.5 - camera.position.x) * Math.min(1, dt * 3);
+    camera.lookAt(camera.position.x, camera.position.y, 0);
     // Objects turn around their upright axis so symbols stay readable, with a slight rock.
     for (const object of floaters) {
       const { spin, bob, baseY, baseTilt } = object.userData;
