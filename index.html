@@ -58,9 +58,18 @@
       <figure class="hero-stage" id="hero-stage">
         <div id="stage" class="stage" aria-hidden="true"></div>
         <figcaption>
-          Requests moving through a backend. Red ones carry a bug and leave the service fixed.
-          <span class="hint-drag">Drag to rotate, hover a part to see what it does.</span>
-          <span class="hint-tap">Tap a part to see what it does.</span>
+          <ul class="legend">
+            <li><span class="swatch" aria-hidden="true"></span>Request</li>
+            <li><span class="swatch swatch-event" aria-hidden="true"></span>Async event</li>
+            <li><span class="swatch swatch-replication" aria-hidden="true"></span>Replication</li>
+            <li><span class="swatch swatch-bug" aria-hidden="true"></span>Bug, fixed in the service</li>
+            <li><span class="swatch swatch-down" aria-hidden="true"></span>Failed replica, traffic moves around it</li>
+          </ul>
+          <p>
+            A large-scale backend at work.
+            <span class="hint-drag">Drag to rotate, hover a part to see what it does.</span>
+            <span class="hint-tap">Tap a part to see what it does.</span>
+          </p>
         </figcaption>
       </figure>
     </section>

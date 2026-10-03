@@ -10,6 +10,7 @@
   --signal: #f2b544;
   --ok: #3fc79a;
   --bug: #ef5b5b;
+  --event: #b794f6;
   --glow: rgba(91, 141, 239, 0.18);
   color-scheme: dark;
 }
@@ -25,6 +26,7 @@
   --signal: #c47f0a;
   --ok: #13875f;
   --bug: #c93838;
+  --event: #7c4dcc;
   --glow: rgba(36, 87, 197, 0.12);
   color-scheme: light;
 }
@@ -300,6 +302,11 @@ a {
     display: none;
   }
 
+  /* Too many parts for a phone screen: show names only for the part that was tapped. */
+  .node-label:not(.is-active) {
+    display: none;
+  }
+
   .name-short {
     display: inline;
   }
@@ -314,10 +321,55 @@ a {
   position: absolute;
   right: 0;
   bottom: 0;
-  max-width: 36ch;
+  max-width: 46ch;
   font-size: 0.85rem;
   color: var(--muted);
   text-align: right;
+}
+
+.hero-stage figcaption p {
+  margin: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 14px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+.swatch-event {
+  background: var(--event);
+}
+
+.swatch-replication {
+  background: var(--accent);
+}
+
+.swatch-bug {
+  background: linear-gradient(90deg, var(--bug) 50%, var(--ok) 50%);
+}
+
+.swatch-down {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--bug) 45%, transparent);
+  outline: 1.5px solid var(--bug);
 }
 
 .hint-drag {
@@ -541,6 +593,10 @@ p.prose {
     position: static;
     margin-top: 4px;
     text-align: left;
+  }
+
+  .legend {
+    justify-content: flex-start;
   }
 
   .block {
