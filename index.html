@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chakravarthy Batna</title>
-  <meta name="description" content="Chakravarthy Batna is a backend engineer at WaveMaker working with Java and Spring Boot, and an open-source contributor." />
+  <meta name="description" content="Chakravarthy Batna is a backend engineer at WaveMaker building authentication, security and platform services in Java and Spring Boot." />
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235B8DEF'/%3E%3Ctext x='32' y='42' font-family='Arial' font-weight='700' font-size='28' text-anchor='middle' fill='white'%3ECB%3C/text%3E%3C/svg%3E" />
   <script>
@@ -31,7 +31,8 @@
     <a class="mark" href="#top" aria-label="Back to top">CB</a>
     <nav aria-label="Sections">
       <a href="#about">About</a>
-      <a href="#open-source">Open source</a>
+      <a href="#experience">Experience</a>
+      <a href="#projects">Projects</a>
       <a href="#skills">Skills</a>
       <a href="#contact">Contact</a>
     </nav>
@@ -45,14 +46,21 @@
     <section class="hero">
       <div class="hero-text">
         <h1>Chakravarthy<br />Batna</h1>
+        <p class="role">Backend Engineer · Java, Spring Boot, Security</p>
         <p class="lede">
-          Backend engineer at WaveMaker. I build Java and Spring Boot services,
+          I build authentication, security and platform services at WaveMaker,
           and I like tracking hard bugs down to their root cause.
         </p>
         <div class="actions">
-          <a class="btn btn-primary" href="https://github.com/chakravarthyBatna">View my GitHub</a>
-          <a class="btn" href="https://www.linkedin.com/in/chakravarthybatna/">Connect on LinkedIn</a>
+          <a class="btn btn-primary" href="Chakravarthy-Batna-Resume.pdf" download>Download resume</a>
+          <a class="btn" href="https://github.com/chakravarthyBatna">View my GitHub</a>
         </div>
+        <dl class="stats">
+          <div><dt>100+</dt><dd>production apps migrated</dd></div>
+          <div><dt>800+</dt><dd>reusable components moved</dd></div>
+          <div><dt>~95%</dt><dd>less manual migration work</dd></div>
+          <div><dt>~45%</dt><dd>faster authentication</dd></div>
+        </dl>
       </div>
 
       <figure class="hero-stage" id="hero-stage">
@@ -77,19 +85,125 @@
       <h2 id="about-title">About</h2>
       <div class="block-body prose">
         <p>
-          I'm a backend engineer at <strong>WaveMaker</strong>, a low-code platform that companies
-          use to build enterprise web and mobile apps. I work on the Java and Spring Boot backend
-          of the platform: building and maintaining backend features, REST APIs, and integrations
-          that customers rely on.
+          I'm an Associate Development Engineer on the backend team at <strong>WaveMaker</strong>,
+          a low-code platform companies use to build enterprise web and mobile apps. Most of my work
+          is in authentication and security: identity providers, tokens, sessions, and secure
+          integrations with GitHub.
         </p>
         <p>
           The part of the job I enjoy most is debugging. I'm comfortable opening a large codebase
-          I've never seen and following a problem until I understand exactly why it happens.
+          I've never seen and following a problem until I understand exactly why it happens. In my
+          free time I fix bugs in large open-source Java projects.
         </p>
         <p>
-          Right now I'm learning more about system design, building scalable REST APIs, and writing
-          safe concurrent code in Java.
+          I'm also doing an MCA in AI and Machine Learning, and I build side projects with RAG and
+          MCP to learn how AI fits into backend systems.
         </p>
+      </div>
+    </section>
+
+    <section class="block" id="experience" aria-labelledby="experience-title">
+      <h2 id="experience-title">Experience</h2>
+      <ol class="block-body timeline">
+        <li>
+          <p class="when">Oct 2024 – Present</p>
+          <h3>Associate Development Engineer (Backend)</h3>
+          <p class="where">WaveMaker India</p>
+          <p>
+            Own backend services for authentication, token lifecycle and repository access on the
+            WaveMaker platform. Built the projects below, with unit and integration tests, in Agile
+            teams shipping to enterprise customers.
+          </p>
+        </li>
+        <li>
+          <p class="when">Jul 2024 – Sep 2024</p>
+          <h3>Software Engineering Intern</h3>
+          <p class="where">WaveMaker India</p>
+          <p>Built UI components and a to-do app on the low-code platform while learning its development workflow.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="projects" aria-labelledby="projects-title">
+      <h2 id="projects-title">What I've built</h2>
+      <div class="block-body projects">
+        <article class="project">
+          <h3>SaaS to Enterprise migration platform</h3>
+          <ul class="tags"><li>JavaScript</li><li>REST APIs</li><li>Docker</li><li>SQLite</li></ul>
+          <dl>
+            <dt>Problem</dt>
+            <dd>Customers moving from WaveMaker Online to WaveMaker Enterprise had to move every app by hand.</dd>
+            <dt>What I built</dt>
+            <dd>An automated pipeline that orders imports by dependency across multi-level component hierarchies, follows branches, provisions roles, and can resume safely after a failure.</dd>
+            <dt>Result</dt>
+            <dd>100+ production apps and 800+ components migrated with zero data loss, and about 95% less manual work.</dd>
+          </dl>
+        </article>
+
+        <article class="project">
+          <h3>GitHub Apps integration</h3>
+          <ul class="tags"><li>OAuth 2.0</li><li>GitHub Apps</li><li>Java</li></ul>
+          <dl>
+            <dt>Problem</dt>
+            <dd>The platform reached customer repositories with long-lived personal access tokens.</dd>
+            <dt>What I built</dt>
+            <dd>A GitHub Apps integration with OAuth authorization, installation lifecycle handling, and short-lived tokens generated on demand.</dd>
+            <dt>Result</dt>
+            <dd>No long-lived credentials, and least-privilege repository access for enterprise GitHub organizations.</dd>
+          </dl>
+        </article>
+
+        <article class="project">
+          <h3>Multi-provider authentication</h3>
+          <ul class="tags"><li>OpenID Connect</li><li>SAML</li><li>JWS</li><li>Spring Security</li></ul>
+          <dl>
+            <dt>Problem</dt>
+            <dd>Customers needed different identity providers inside the same application.</dd>
+            <dt>What I built</dt>
+            <dd>A pluggable backend for token validation, sessions and identity resolution that supports OpenID Connect, SAML, JWS, opaque tokens and database login.</dd>
+            <dt>Result</dt>
+            <dd>One security model across all providers, and new providers can be added without platform changes.</dd>
+          </dl>
+        </article>
+
+        <article class="project">
+          <h3>Sign-in for embedded apps</h3>
+          <ul class="tags"><li>JWS</li><li>SSO</li><li>Cross-origin</li></ul>
+          <dl>
+            <dt>Problem</dt>
+            <dd>Browsers block Microsoft SSO when a WaveMaker app runs inside another site's iframe.</dd>
+            <dt>What I built</dt>
+            <dd>A signed-token exchange between the host page and the embedded app, with origin checks and signature verification.</dd>
+            <dt>Result</dt>
+            <dd>Users are signed in silently inside embedded apps, with no redirects.</dd>
+          </dl>
+        </article>
+
+        <article class="project">
+          <h3>Redis session store</h3>
+          <ul class="tags"><li>Redis</li><li>MySQL</li><li>Spring</li></ul>
+          <dl>
+            <dt>Problem</dt>
+            <dd>Every request checked the session cookie with a synchronous MySQL lookup.</dd>
+            <dt>What I built</dt>
+            <dd>Moved sessions for all auth providers to a Redis store with time-based expiry.</dd>
+            <dt>Result</dt>
+            <dd>About 45% lower authentication latency, and easier horizontal scaling for multi-tenant load.</dd>
+          </dl>
+        </article>
+
+        <article class="project">
+          <h3>Skills for AI platform agents</h3>
+          <ul class="tags"><li>AI agents</li><li>LLMs</li><li>Java</li></ul>
+          <dl>
+            <dt>Problem</dt>
+            <dd>The platform's AI agents needed to manage version control and security tasks from plain-language requests.</dd>
+            <dt>What I built</dt>
+            <dd>Backend integrations and domain-specific skills for the agents, with better routing between them.</dd>
+            <dt>Result</dt>
+            <dd>About 30% fewer tokens used per task, and more relevant answers.</dd>
+          </dl>
+        </article>
       </div>
     </section>
 
@@ -130,21 +244,49 @@
       <dl class="block-body skills">
         <div class="group-lang">
           <dt>Languages</dt>
-          <dd><ul><li>Java</li><li>Python</li><li>SQL</li></ul></dd>
+          <dd><ul><li>Java</li><li>Python</li><li>JavaScript</li><li>SQL</li></ul></dd>
         </div>
         <div class="group-frameworks">
           <dt>Frameworks</dt>
-          <dd><ul><li>Spring Boot</li><li>Spring Security</li><li>Hibernate</li><li>JUnit 5</li></ul></dd>
+          <dd><ul><li>Spring Boot</li><li>Spring Security</li><li>Hibernate</li><li>JUnit 5</li><li>FastAPI</li></ul></dd>
+        </div>
+        <div class="group-security">
+          <dt>Auth and security</dt>
+          <dd><ul><li>OAuth 2.0</li><li>OpenID Connect</li><li>SAML</li><li>JWT / JWS</li><li>Opaque tokens</li><li>Keycloak</li><li>SSO</li></ul></dd>
         </div>
         <div class="group-data">
-          <dt>Data</dt>
-          <dd><ul><li>PostgreSQL</li><li>MySQL</li><li>MongoDB</li><li>Redis</li></ul></dd>
+          <dt>Data and caching</dt>
+          <dd><ul><li>PostgreSQL</li><li>MySQL</li><li>Redis</li><li>MongoDB</li><li>SQLite</li></ul></dd>
+        </div>
+        <div class="group-ai">
+          <dt>AI</dt>
+          <dd><ul><li>RAG</li><li>MCP</li><li>AI agents</li><li>LangChain</li><li>OpenAI API</li><li>Embeddings</li><li>pgvector</li><li>Sentence Transformers</li><li>Prompt engineering</li></ul></dd>
         </div>
         <div class="group-build">
-          <dt>Build and DevOps</dt>
-          <dd><ul><li>Maven</li><li>Gradle</li><li>Docker</li></ul></dd>
+          <dt>APIs and DevOps</dt>
+          <dd><ul><li>REST APIs</li><li>Microservices</li><li>Kong API Gateway</li><li>Docker</li><li>Maven</li><li>Gradle</li><li>Git</li><li>Linux</li></ul></dd>
+        </div>
+        <div class="group-concepts">
+          <dt>Concepts</dt>
+          <dd><ul><li>System design</li><li>Distributed systems</li><li>Multithreading</li><li>Design patterns</li><li>SOLID</li><li>Data structures and algorithms</li></ul></dd>
         </div>
       </dl>
+    </section>
+
+    <section class="block" id="education" aria-labelledby="education-title">
+      <h2 id="education-title">Education</h2>
+      <ol class="block-body timeline">
+        <li>
+          <p class="when">2025 – 2027</p>
+          <h3>MCA in Artificial Intelligence and Machine Learning</h3>
+          <p class="where">Amity University Online</p>
+        </li>
+        <li>
+          <p class="when">2021 – 2024</p>
+          <h3>BSc in Computer Science</h3>
+          <p class="where">Ambedkar University</p>
+        </li>
+      </ol>
     </section>
 
     <section class="block" id="contact" aria-labelledby="contact-title">
@@ -154,7 +296,11 @@
           <li><a href="https://www.linkedin.com/in/chakravarthybatna/"><span>LinkedIn</span><span class="handle">in/chakravarthybatna</span></a></li>
           <li><a href="https://github.com/chakravarthyBatna"><span>GitHub</span><span class="handle">@chakravarthyBatna</span></a></li>
           <li><a href="https://leetcode.com/chakravarthybatna/"><span>LeetCode</span><span class="handle">chakravarthybatna</span></a></li>
+          <li><span class="contact-row"><span>Email</span><span class="handle">chakra***@gmail.com</span></span></li>
+          <li><span class="contact-row"><span>Phone</span><span class="handle">+91 *******41</span></span></li>
         </ul>
+        <p class="contact-note">Email and phone are shared on request. The quickest way to reach me is LinkedIn.</p>
+        <a class="btn btn-primary" href="Chakravarthy-Batna-Resume.pdf" download>Download resume (PDF)</a>
       </div>
     </section>
   </main>
