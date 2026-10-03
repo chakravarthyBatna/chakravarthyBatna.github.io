@@ -50,18 +50,20 @@ function pickOne(items) {
 // ---------- System description ----------
 
 // Each part belongs to a layer; the layer decides its color.
+// `wide` and `tall` say where the name label goes in the wide (desktop) and tall (phone) layouts;
+// `short` is the name used on phones, where parts sit closer together.
 const COMPONENTS = {
-  clients: { layer: '--c-edge', label: 'Clients', desc: 'Web and mobile apps sending HTTP requests' },
-  lb: { layer: '--c-edge', label: 'Load balancer', desc: 'Spreads incoming traffic and terminates TLS' },
-  gateway: { layer: '--c-edge', label: 'API gateway', desc: 'Routes each request to the right service and applies rate limits' },
-  auth: { layer: '--c-service', label: 'Auth service', desc: 'Login and tokens with Spring Security, running as 3 replicas' },
-  users: { layer: '--c-service', label: 'User service', desc: 'Reads profiles from the cache or the read replicas, running as 3 replicas' },
-  orders: { layer: '--c-service', label: 'Order service', desc: 'Writes orders to the primary and publishes events, running as 3 replicas' },
-  redis: { layer: '--c-data', label: 'Redis cluster', desc: 'Sessions and hot data kept in memory, split across 3 nodes' },
-  replicas: { layer: '--c-data', label: 'Read replicas', desc: 'Copies of the primary that serve read traffic' },
-  primary: { layer: '--c-data', label: 'PostgreSQL primary', desc: 'Every write lands here, then copies to the read replicas' },
-  kafka: { layer: '--c-async', label: 'Kafka', desc: 'Carries events so slow work happens in the background' },
-  workers: { layer: '--c-async', label: 'Workers', desc: 'Consume events to send emails, update search, and more' },
+  clients: { layer: '--c-edge', label: 'Clients', short: 'Clients', wide: 'above', tall: 'right', desc: 'Web and mobile apps sending HTTP requests' },
+  lb: { layer: '--c-edge', label: 'Load balancer', short: 'Load balancer', wide: 'below', tall: 'right', desc: 'Spreads incoming traffic and terminates TLS' },
+  gateway: { layer: '--c-edge', label: 'API gateway', short: 'API gateway', wide: 'above', tall: 'right', desc: 'Routes each request to the right service and applies rate limits' },
+  auth: { layer: '--c-service', label: 'Auth service ×3', short: 'Auth ×3', wide: 'below', tall: 'below', desc: 'Login and tokens with Spring Security, running as 3 replicas' },
+  users: { layer: '--c-service', label: 'User service ×3', short: 'Users ×3', wide: 'above', tall: 'below', desc: 'Reads profiles from the cache or the read replicas, running as 3 replicas' },
+  orders: { layer: '--c-service', label: 'Order service ×3', short: 'Orders ×3', wide: 'above', tall: 'below', desc: 'Writes orders to the primary and publishes events, running as 3 replicas' },
+  redis: { layer: '--c-data', label: 'Redis cluster', short: 'Redis', wide: 'below', tall: 'below', desc: 'Sessions and hot data kept in memory, split across 3 nodes' },
+  replicas: { layer: '--c-data', label: 'Read replicas', short: 'Replicas', wide: 'above', tall: 'below', desc: 'Copies of the primary that serve read traffic' },
+  primary: { layer: '--c-data', label: 'PostgreSQL primary', short: 'Postgres', wide: 'above', tall: 'below', desc: 'Every write lands here, then copies to the read replicas' },
+  kafka: { layer: '--c-async', label: 'Kafka', short: 'Kafka', wide: 'above', tall: 'above', desc: 'Carries events so slow work happens in the background' },
+  workers: { layer: '--c-async', label: 'Workers', short: 'Workers', wide: 'above', tall: 'below', desc: 'Consume events to send emails, update search, and more' },
 };
 
 const TOUR = ['clients', 'lb', 'gateway', 'auth', 'users', 'orders', 'redis', 'replicas', 'primary', 'kafka', 'workers'];
@@ -292,19 +294,25 @@ function setupScene() {
     connect('kafka.out', 'w1', -0.1);
 
     const bounds = new THREE.Box3().setFromObject(system);
-    const boundsSize = bounds.getSize(new THREE.Vector3());
 
-    // One label per part, shown only while the tour or a hover points at it.
-    // Labels sit above a part, or below it when the part is near the top edge.
+    // Every part has a small name label; the one the tour or a hover points at expands with a description.
     for (const [id, info] of Object.entries(COMPONENTS)) {
       const box = new THREE.Box3();
       components[id].meshes.forEach((mesh) => box.expandByObject(mesh));
       const center = box.getCenter(new THREE.Vector3());
-      const below = center.y > bounds.max.y - boundsSize.y * 0.3;
-      const labelEl = makeLabel(info.label, info.desc);
+      const side = portrait ? info.tall : info.wide;
+      const labelEl = makeLabel(portrait ? info.short : info.label, info.desc);
       const label = new CSS2DObject(labelEl);
-      label.position.set(center.x, below ? box.min.y - 0.12 : box.max.y + 0.12, center.z);
-      label.center.set(0.5, below ? 0 : 1);
+      if (side === 'right') {
+        label.position.set(box.max.x + 0.15, center.y, center.z);
+        label.center.set(0, 0.5);
+      } else if (side === 'below') {
+        label.position.set(center.x, box.min.y - 0.15, center.z);
+        label.center.set(0.5, 0);
+      } else {
+        label.position.set(center.x, box.max.y + 0.12, center.z);
+        label.center.set(0.5, 1);
+      }
       system.add(label);
       components[id].labelEl = labelEl;
     }
@@ -314,7 +322,7 @@ function setupScene() {
 
     const fitBox = bounds.clone();
     fitBox.min.y = floorY;
-    fitBox.max.y += 0.3;
+    fitBox.max.y += 0.45;
     world = { components, pickables, pads, points, meshesByPoint, curves, fitBox };
   }
 
@@ -563,6 +571,8 @@ function setupScene() {
       shown = null;
       build();
       applyTheme();
+      // Keep the tour's current part highlighted across the rebuild.
+      refreshHighlight();
     }
 
     // Fit the camera so the whole system fills the panel.
@@ -580,6 +590,8 @@ function setupScene() {
   function render() {
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
+    // The label renderer stacks labels by depth; keep the expanded card above its neighbours.
+    if (shown && world) world.components[shown].labelEl.style.zIndex = '10000';
   }
 
   let elapsed = 0;

@@ -299,38 +299,53 @@ a {
 }
 
 .node-label {
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: center;
   max-width: 220px;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  box-shadow: var(--shadow);
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
   text-align: center;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.node-label.is-active {
-  display: flex;
-  z-index: 5;
+  transition: padding 0.15s ease, border-color 0.15s ease;
 }
 
 .label-name {
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
   white-space: nowrap;
 }
 
 .label-desc {
+  display: none;
   margin-top: 2px;
   font-size: 13px;
   line-height: 1.4;
   color: var(--muted);
+}
+
+/* The part the tour or a hover points at gets a full card with its description. */
+.node-label.is-active {
+  z-index: 5;
+  padding: 8px 12px;
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.node-label.is-active .label-name {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.node-label.is-active .label-desc {
+  display: block;
 }
 
 .hero-stage figcaption {
@@ -634,11 +649,14 @@ p.prose {
   }
 
   .node-label {
-    max-width: 190px;
-    padding: 6px 10px;
+    max-width: 165px;
   }
 
   .label-name {
+    font-size: 11px;
+  }
+
+  .node-label.is-active .label-name {
     font-size: 14px;
   }
 
