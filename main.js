@@ -60,7 +60,7 @@ const COMPONENTS = {
   users: { layer: '--c-service', label: 'User service ×3', short: 'Users ×3', wide: 'above', tall: 'below', desc: 'Reads profiles from the cache or the read replicas, running as 3 replicas' },
   orders: { layer: '--c-service', label: 'Order service ×3', short: 'Orders ×3', wide: 'above', tall: 'below', desc: 'Writes orders to the primary and publishes events, running as 3 replicas' },
   redis: { layer: '--c-data', label: 'Redis cluster', short: 'Redis', wide: 'below', tall: 'below', desc: 'Sessions and hot data kept in memory, split across 3 nodes' },
-  replicas: { layer: '--c-data', label: 'Read replicas', short: 'Replicas', wide: 'above', tall: 'below', desc: 'Copies of the primary that serve read traffic' },
+  replicas: { layer: '--c-data', label: 'Read replicas', short: 'Replicas', wide: 'right', tall: 'below', desc: 'Copies of the primary that serve read traffic' },
   primary: { layer: '--c-data', label: 'PostgreSQL primary', short: 'Postgres', wide: 'above', tall: 'below', desc: 'Every write lands here, then copies to the read replicas' },
   kafka: { layer: '--c-async', label: 'Kafka', short: 'Kafka', wide: 'above', tall: 'above', desc: 'Carries events so slow work happens in the background' },
   workers: { layer: '--c-async', label: 'Workers', short: 'Workers', wide: 'above', tall: 'below', desc: 'Consume events to send emails, update search, and more' },
@@ -479,7 +479,10 @@ function setupScene() {
     const active = hovered || tourCurrent;
     if (active === shown) return;
     if (shown) {
-      world.components[shown].labelEl.classList.remove('is-active');
+      const previous = world.components[shown].labelEl;
+      previous.classList.remove('is-active');
+      previous.style.marginLeft = '';
+      previous.style.marginTop = '';
       world.components[shown].meshes.forEach((m) => { m.userData.targetScale = 1; });
     }
     shown = active;
@@ -590,8 +593,32 @@ function setupScene() {
   function render() {
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
+    if (!world) return;
+    for (const component of Object.values(world.components)) keepInsidePanel(component.labelEl);
     // The label renderer stacks labels by depth; keep the expanded card above its neighbours.
-    if (shown && world) world.components[shown].labelEl.style.zIndex = '10000';
+    if (shown) world.components[shown].labelEl.style.zIndex = '10000';
+  }
+
+  // Parts near an edge (like the clients) would push half their label outside the panel,
+  // where it gets clipped. Nudge the label back inside with margins.
+  function keepInsidePanel(card) {
+    const panel = labelRenderer.domElement.getBoundingClientRect();
+    const rect = card.getBoundingClientRect();
+    const shiftX = parseFloat(card.style.marginLeft) || 0;
+    const shiftY = parseFloat(card.style.marginTop) || 0;
+    const left = rect.left - shiftX;
+    const right = rect.right - shiftX;
+    const top = rect.top - shiftY;
+    const bottom = rect.bottom - shiftY;
+    const gap = 8;
+    let dx = 0;
+    let dy = 0;
+    if (left < panel.left + gap) dx = panel.left + gap - left;
+    else if (right > panel.right - gap) dx = panel.right - gap - right;
+    if (top < panel.top + gap) dy = panel.top + gap - top;
+    else if (bottom > panel.bottom - gap) dy = panel.bottom - gap - bottom;
+    card.style.marginLeft = `${dx}px`;
+    card.style.marginTop = `${dy}px`;
   }
 
   let elapsed = 0;
