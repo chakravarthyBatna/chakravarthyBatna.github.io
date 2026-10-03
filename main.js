@@ -63,8 +63,7 @@ function setupSectionReveal() {
 // Low-poly shapes float behind the whole page. Scrolling moves the camera down through them
 // and the mouse shifts the view a little, so the page itself feels like a 3D space.
 function setupBackground() {
-  const wideScreen = matchMedia('(min-width: 901px)');
-  if (reduceMotion || (coarsePointer && !wideScreen.matches)) return;
+  if (reduceMotion) return;
   const host = document.getElementById('bg3d');
   let renderer;
   try {
@@ -326,26 +325,28 @@ function setupBackground() {
   const DEPTH = 60;
   const floaters = [];
 
-  // Objects live only in the side margins, never behind the text and cards in the middle.
-  // `edge` is how far out toward the screen edge an object sits (1 = at the edge).
-  function placeInMargin(object) {
-    const { side, edge } = object.userData;
+  // Objects spread across the full width. `across` is the object's spot from the left edge (-1)
+  // to the right edge (1), so the layout keeps its shape when the window is resized.
+  function placeAcross(object) {
     const distance = camera.position.z - object.position.z;
     const halfWidth = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * distance * camera.aspect;
-    object.position.x = side * halfWidth * edge;
+    object.position.x = object.userData.across * halfWidth * 0.92;
   }
 
   function populate(font) {
-    const perSide = Math.ceil(builders.length / 2);
-    builders.forEach((build, i) => {
+    // Phones get a lighter set.
+    const chosen = coarsePointer ? builders.slice(0, 14) : builders;
+    const columns = 5;
+    chosen.forEach((build, i) => {
       const material = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.2, transparent: true, depthWrite: false });
       const edgeMaterial = new THREE.LineBasicMaterial({ transparent: true });
       const object = build(material, edgeMaterial, font);
       if (!object.children.length) return;
-      const side = i % 2 === 0 ? -1 : 1;
-      const slot = Math.floor(i / 2);
-      // Spread each side's objects evenly down the page so they never bunch up.
-      const y = 3 - (slot + 0.5) * (DEPTH / perSide) + THREE.MathUtils.randFloatSpread(1.5);
+      // Walk down the page one object at a time, hopping between five columns in a scattered
+      // order, so objects cover the width evenly without bunching up.
+      const column = (i * 3) % columns;
+      const across = -1 + (2 * column + 1) / columns + THREE.MathUtils.randFloatSpread(0.25);
+      const y = 3 - (i + 0.5) * (DEPTH / chosen.length) + THREE.MathUtils.randFloatSpread(1);
       object.position.set(0, y, THREE.MathUtils.randFloat(-20, -12));
       object.rotation.set(THREE.MathUtils.randFloatSpread(0.5), Math.random() * Math.PI * 2, THREE.MathUtils.randFloatSpread(0.3));
       object.scale.setScalar(THREE.MathUtils.randFloat(1.3, 1.7));
@@ -353,14 +354,13 @@ function setupBackground() {
         layer: layers[i % layers.length],
         material,
         edgeMaterial,
-        side,
-        edge: THREE.MathUtils.randFloat(0.9, 0.95),
+        across,
         spin: THREE.MathUtils.randFloat(0.15, 0.35) * (Math.random() < 0.5 ? -1 : 1),
         bob: Math.random() * Math.PI * 2,
         baseY: y,
         baseTilt: object.rotation.x,
       };
-      placeInMargin(object);
+      placeAcross(object);
       scene.add(object);
       floaters.push(object);
     });
@@ -380,9 +380,10 @@ function setupBackground() {
     for (const object of floaters) {
       const color = cssColor(object.userData.layer);
       object.userData.material.color.copy(color);
-      object.userData.material.opacity = light ? 0.16 : 0.24;
+      // Faint enough that text in front of an object stays easy to read.
+      object.userData.material.opacity = light ? 0.07 : 0.11;
       object.userData.edgeMaterial.color.copy(color);
-      object.userData.edgeMaterial.opacity = light ? 0.3 : 0.4;
+      object.userData.edgeMaterial.opacity = light ? 0.14 : 0.2;
     }
   }
 
@@ -390,7 +391,7 @@ function setupBackground() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    floaters.forEach(placeInMargin);
+    floaters.forEach(placeAcross);
   }
 
   const mouse = { x: 0, y: 0 };
@@ -407,14 +408,13 @@ function setupBackground() {
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.05);
-    // On narrow screens the content fills the width, so the background is hidden and paused.
-    if (document.hidden || wideScreen.matches === false) return;
+    if (document.hidden) return;
     const elapsed = clock.elapsedTime;
     const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     const progress = window.scrollY / scrollable;
     const targetY = -progress * (DEPTH - 8);
     camera.position.y += (targetY + -mouse.y * 1.2 - camera.position.y) * Math.min(1, dt * 4);
-    camera.position.x += (mouse.x * 0.5 - camera.position.x) * Math.min(1, dt * 3);
+    camera.position.x += (mouse.x * 1.2 - camera.position.x) * Math.min(1, dt * 3);
     camera.lookAt(camera.position.x, camera.position.y, 0);
     // Objects turn around their upright axis so symbols stay readable, with a slight rock.
     for (const object of floaters) {

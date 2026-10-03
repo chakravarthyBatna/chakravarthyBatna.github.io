@@ -132,15 +132,6 @@ a {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* Only the side margins show the 3D objects; the middle, where the content is, stays clear. */
-  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 6%, transparent 11%, transparent 89%, #000 94%, #000 100%);
-  mask-image: linear-gradient(90deg, #000 0, #000 6%, transparent 11%, transparent 89%, #000 94%, #000 100%);
-}
-
-@media (max-width: 900px) {
-  .bg3d {
-    display: none;
-  }
 }
 
 .bg3d canvas {
