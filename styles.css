@@ -163,33 +163,29 @@ a {
 /* Hero */
 
 .hero {
-  position: relative;
-  min-height: 100svh;
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  align-items: center;
-  gap: 24px;
-  padding: 96px clamp(16px, 4vw, 48px) 48px;
   max-width: 1360px;
   margin: 0 auto;
+  padding: 104px clamp(16px, 4vw, 48px) 40px;
 }
 
-.hero-text {
-  position: relative;
-  z-index: 2;
+.hero-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 24px 48px;
 }
 
 .hero h1 {
-  font-size: clamp(3.2rem, 8vw, 6.6rem);
+  font-size: clamp(3rem, 7vw, 6.2rem);
   font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 0.92;
 }
 
 .lede {
-  max-width: 34ch;
-  margin: 28px 0 0;
-  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
+  max-width: 40ch;
+  margin: 0;
+  font-size: clamp(1.1rem, 1.5vw, 1.25rem);
   color: var(--muted);
 }
 
@@ -197,7 +193,7 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 32px;
+  margin-top: 24px;
 }
 
 .btn {
@@ -222,17 +218,19 @@ a {
   color: var(--accent-text);
 }
 
+/* 3D system panel */
+
 .hero-stage {
-  position: relative;
-  margin: 0;
-  height: min(72vh, 680px);
+  margin: 36px 0 0;
 }
 
 .stage {
-  position: absolute;
-  inset: 0;
-  border-radius: 28px;
-  background: radial-gradient(closest-side, var(--glow), transparent);
+  position: relative;
+  height: clamp(460px, 66vh, 760px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 40%, var(--glow), transparent 70%);
 }
 
 .stage canvas {
@@ -251,80 +249,56 @@ a {
 }
 
 .node-label {
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-  padding: 2px 8px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  transition: border-color 0.2s ease, color 0.2s ease;
-}
-
-.node-desc {
-  display: none;
-  max-width: 190px;
-  margin-top: 2px;
-  font-family: "IBM Plex Sans", sans-serif;
-  font-size: 12px;
-  line-height: 1.35;
-  white-space: normal;
+  max-width: 240px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   text-align: center;
-  color: var(--muted);
 }
 
 .node-label.is-active {
+  display: flex;
   z-index: 5;
+}
+
+.node-label .label-name {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  white-space: nowrap;
 }
 
-.node-label.is-active .node-desc {
-  display: block;
+.node-label .label-desc {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
-.name-short {
-  display: none;
-}
-
-@media (max-width: 600px) {
-  .node-label {
-    font-size: 11px;
-    padding: 1px 6px;
-  }
-
-  .name-full {
-    display: none;
-  }
-
-  /* Too many parts for a phone screen: show names only for the part that was tapped. */
-  .node-label:not(.is-active) {
-    display: none;
-  }
-
-  .name-short {
-    display: inline;
-  }
-
-  .node-desc {
-    max-width: 150px;
-    font-size: 11px;
-  }
+.tier-label {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 .hero-stage figcaption {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  max-width: 46ch;
-  font-size: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 24px;
+  margin-top: 12px;
+  font-size: 0.875rem;
   color: var(--muted);
-  text-align: right;
 }
 
 .hero-stage figcaption p {
@@ -334,9 +308,8 @@ a {
 .legend {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px 14px;
-  margin: 0 0 6px;
+  gap: 4px 16px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -572,31 +545,35 @@ p.prose {
 
 @media (max-width: 900px) {
   .hero {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-    gap: 8px;
     padding-top: 88px;
   }
 
+  .hero-intro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .hero-stage {
-    height: auto;
-    order: -1;
+    margin-top: 28px;
   }
 
   .stage {
-    position: relative;
-    height: 48vh;
-    min-height: 300px;
+    height: 78svh;
+    min-height: 520px;
+    max-height: 760px;
+    border-radius: 18px;
   }
 
-  .hero-stage figcaption {
-    position: static;
-    margin-top: 4px;
-    text-align: left;
+  .node-label {
+    max-width: 200px;
+    padding: 6px 10px;
   }
 
-  .legend {
-    justify-content: flex-start;
+  .node-label .label-name {
+    font-size: 14px;
+  }
+
+  .node-label .label-desc {
+    font-size: 12px;
   }
 
   .block {
