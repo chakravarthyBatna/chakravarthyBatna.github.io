@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 const root = document.documentElement;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -81,41 +83,174 @@ function setupBackground() {
   key.position.set(4, 6, 8);
   scene.add(key);
 
+  // ---------- Developer objects ----------
+  // Each builder returns a group of meshes. Meshes share one material per object so a theme
+  // change only has to recolor a handful of materials.
+
+  function solid(geometry, material, edgeMaterial, { edges = true } = {}) {
+    const mesh = new THREE.Mesh(geometry, material);
+    if (edges) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), edgeMaterial));
+    return mesh;
+  }
+
+  function gear(mat, edge) {
+    const teeth = 10;
+    const outer = 0.9;
+    const inner = 0.72;
+    const shape = new THREE.Shape();
+    for (let i = 0; i < teeth * 2; i += 1) {
+      const radius = i % 2 === 0 ? outer : inner;
+      const a0 = (i / (teeth * 2)) * Math.PI * 2;
+      const a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2;
+      const p0 = [Math.cos(a0) * radius, Math.sin(a0) * radius];
+      if (i === 0) shape.moveTo(...p0); else shape.lineTo(...p0);
+      shape.lineTo(Math.cos(a1) * radius, Math.sin(a1) * radius);
+    }
+    const hole = new THREE.Path();
+    hole.absarc(0, 0, 0.3, 0, Math.PI * 2, true);
+    shape.holes.push(hole);
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.28, bevelEnabled: false });
+    geometry.center();
+    const group = new THREE.Group();
+    group.add(solid(geometry, mat, edge));
+    return group;
+  }
+
+  function database(mat, edge) {
+    const group = new THREE.Group();
+    const disk = new THREE.CylinderGeometry(0.75, 0.75, 0.38, 32);
+    [-0.45, 0, 0.45].forEach((y) => {
+      const mesh = solid(disk, mat, edge);
+      mesh.position.y = y;
+      group.add(mesh);
+    });
+    return group;
+  }
+
+  function padlock(mat, edge) {
+    const group = new THREE.Group();
+    group.add(solid(new THREE.BoxGeometry(1.2, 0.95, 0.4), mat, edge));
+    const shackle = solid(new THREE.TorusGeometry(0.4, 0.09, 10, 24, Math.PI), mat, edge, { edges: false });
+    shackle.position.y = 0.47;
+    group.add(shackle);
+    const keyhole = solid(new THREE.CylinderGeometry(0.1, 0.1, 0.45, 16), mat, edge, { edges: false });
+    keyhole.rotation.x = Math.PI / 2;
+    group.add(keyhole);
+    return group;
+  }
+
+  function server(mat, edge) {
+    const group = new THREE.Group();
+    const unit = new THREE.BoxGeometry(1.5, 0.42, 0.9);
+    const led = new THREE.SphereGeometry(0.05, 8, 8);
+    [-0.5, 0, 0.5].forEach((y) => {
+      const box = solid(unit, mat, edge);
+      box.position.y = y;
+      group.add(box);
+      [0.45, 0.6].forEach((x) => {
+        const light = solid(led, mat, edge, { edges: false });
+        light.position.set(x, y, 0.46);
+        group.add(light);
+      });
+    });
+    return group;
+  }
+
+  function terminal(mat, edge, font) {
+    const group = new THREE.Group();
+    group.add(solid(new THREE.BoxGeometry(2, 1.35, 0.12), mat, edge));
+    const bar = solid(new THREE.BoxGeometry(2, 0.22, 0.16), mat, edge, { edges: false });
+    bar.position.y = 0.56;
+    group.add(bar);
+    if (font) {
+      const prompt = solid(textGeometry('>_', font, 0.42), mat, edge, { edges: false });
+      prompt.position.set(-0.45, -0.1, 0.12);
+      group.add(prompt);
+    }
+    return group;
+  }
+
+  function gitBranch(mat, edge) {
+    const group = new THREE.Group();
+    const node = new THREE.SphereGeometry(0.2, 16, 16);
+    const commits = [[0, -0.9, 0], [0, 0, 0], [0, 0.9, 0], [0.75, 0.55, 0]];
+    commits.forEach((p) => {
+      const mesh = solid(node, mat, edge, { edges: false });
+      mesh.position.set(...p);
+      group.add(mesh);
+    });
+    const trunk = solid(new THREE.CylinderGeometry(0.06, 0.06, 1.8, 8), mat, edge, { edges: false });
+    group.add(trunk);
+    const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, -0.2, 0), new THREE.Vector3(0.75, -0.1, 0), new THREE.Vector3(0.75, 0.55, 0));
+    group.add(solid(new THREE.TubeGeometry(curve, 16, 0.06, 8), mat, edge, { edges: false }));
+    return group;
+  }
+
+  function textGeometry(text, font, size) {
+    const geometry = new TextGeometry(text, { font, size, height: 0.22, curveSegments: 6, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.02, bevelSegments: 2 });
+    geometry.center();
+    return geometry;
+  }
+
+  function codeSymbol(text) {
+    return (mat, edge, font) => {
+      const group = new THREE.Group();
+      if (font) group.add(solid(textGeometry(text, font, 0.95), mat, edge, { edges: false }));
+      return group;
+    };
+  }
+
   const layers = ['--c-edge', '--c-service', '--c-data', '--c-async', '--c-ai'];
-  const shapes = [
-    new THREE.BoxGeometry(1.1, 1.1, 1.1),
-    new THREE.IcosahedronGeometry(0.8, 0),
-    new THREE.OctahedronGeometry(0.85, 0),
-    new THREE.CylinderGeometry(0.6, 0.6, 1.1, 24),
-    new THREE.TorusGeometry(0.6, 0.2, 12, 32),
+  const builders = [
+    codeSymbol('{ }'), gear, codeSymbol('</>'), database, padlock, codeSymbol('=>'),
+    server, terminal, codeSymbol('( )'), gitBranch, codeSymbol('[ ]'), codeSymbol('&&'), codeSymbol(';'),
   ];
   const DEPTH = 60;
   const count = coarsePointer ? 16 : 34;
   const floaters = [];
-  for (let i = 0; i < count; i += 1) {
-    const geometry = shapes[i % shapes.length];
-    const material = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.2, transparent: true, depthWrite: false });
-    const mesh = new THREE.Mesh(geometry, material);
-    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), new THREE.LineBasicMaterial({ transparent: true }));
-    mesh.add(edges);
-    // Shapes sit far back so they read as depth, not as clutter behind the text.
-    const side = i % 2 === 0 ? -1 : 1;
-    mesh.position.set(side * THREE.MathUtils.randFloat(6, 24), -Math.random() * DEPTH + 4, THREE.MathUtils.randFloat(-26, -12));
-    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-    mesh.scale.setScalar(THREE.MathUtils.randFloat(0.6, 1.3));
-    mesh.userData = { layer: layers[i % layers.length], spin: THREE.MathUtils.randFloat(0.1, 0.35), bob: Math.random() * Math.PI * 2, baseY: mesh.position.y, edges };
-    scene.add(mesh);
-    floaters.push(mesh);
+
+  function populate(font) {
+    for (let i = 0; i < count; i += 1) {
+      const material = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.2, transparent: true, depthWrite: false });
+      const edgeMaterial = new THREE.LineBasicMaterial({ transparent: true });
+      const object = builders[i % builders.length](material, edgeMaterial, font);
+      if (!object.children.length) continue;
+      // Objects sit far back so they read as depth, not as clutter behind the text.
+      const side = i % 2 === 0 ? -1 : 1;
+      object.position.set(side * THREE.MathUtils.randFloat(6, 24), -Math.random() * DEPTH + 4, THREE.MathUtils.randFloat(-26, -12));
+      object.rotation.set(THREE.MathUtils.randFloatSpread(0.6), Math.random() * Math.PI * 2, THREE.MathUtils.randFloatSpread(0.4));
+      object.scale.setScalar(THREE.MathUtils.randFloat(1.2, 1.9));
+      object.userData = {
+        layer: layers[i % layers.length],
+        material,
+        edgeMaterial,
+        spin: THREE.MathUtils.randFloat(0.15, 0.4) * (Math.random() < 0.5 ? -1 : 1),
+        bob: Math.random() * Math.PI * 2,
+        baseY: object.position.y,
+        baseTilt: object.rotation.x,
+      };
+      scene.add(object);
+      floaters.push(object);
+    }
+    applyTheme();
   }
+
+  // Code symbols need a font; until it loads (or if it fails) only the modelled objects appear.
+  new FontLoader().load(
+    'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+    (font) => populate(font),
+    undefined,
+    () => populate(null),
+  );
 
   function applyTheme() {
     const light = root.dataset.theme === 'light';
-    for (const mesh of floaters) {
-      const color = cssColor(mesh.userData.layer);
-      mesh.material.color.copy(color);
-      mesh.material.opacity = light ? 0.12 : 0.18;
-      mesh.userData.edges.material.color.copy(color);
-      mesh.userData.edges.material.opacity = light ? 0.25 : 0.32;
+    for (const object of floaters) {
+      const color = cssColor(object.userData.layer);
+      object.userData.material.color.copy(color);
+      object.userData.material.opacity = light ? 0.16 : 0.24;
+      object.userData.edgeMaterial.color.copy(color);
+      object.userData.edgeMaterial.opacity = light ? 0.3 : 0.4;
     }
   }
 
@@ -147,10 +282,12 @@ function setupBackground() {
     camera.position.y += (targetY + -mouse.y * 1.2 - camera.position.y) * Math.min(1, dt * 4);
     camera.position.x += (mouse.x * 2.4 - camera.position.x) * Math.min(1, dt * 3);
     camera.lookAt(camera.position.x * 0.3, camera.position.y, 0);
-    for (const mesh of floaters) {
-      mesh.rotation.x += dt * mesh.userData.spin;
-      mesh.rotation.y += dt * mesh.userData.spin * 0.8;
-      mesh.position.y = mesh.userData.baseY + Math.sin(elapsed * 0.5 + mesh.userData.bob) * 0.4;
+    // Objects turn around their upright axis so symbols stay readable, with a slight rock.
+    for (const object of floaters) {
+      const { spin, bob, baseY, baseTilt } = object.userData;
+      object.rotation.y += dt * spin;
+      object.rotation.x = baseTilt + Math.sin(elapsed * 0.6 + bob) * 0.15;
+      object.position.y = baseY + Math.sin(elapsed * 0.5 + bob) * 0.4;
     }
     renderer.render(scene, camera);
   });
