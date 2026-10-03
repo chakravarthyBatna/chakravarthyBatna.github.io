@@ -66,8 +66,6 @@ const COMPONENTS = {
   workers: { layer: '--c-async', label: 'Workers', short: 'Workers', wide: 'above', tall: 'below', desc: 'Consume events to send emails, update search, and more' },
 };
 
-const TOUR = ['clients', 'lb', 'gateway', 'auth', 'users', 'orders', 'redis', 'replicas', 'primary', 'kafka', 'workers'];
-
 const CLUSTERS = [
   { id: 'auth', y: 1.9 },
   { id: 'users', y: 0 },
@@ -101,18 +99,14 @@ function setupScene() {
   controls.enableZoom = false;
   controls.enablePan = false;
   controls.enableDamping = true;
-  controls.minAzimuthAngle = -0.6;
-  controls.maxAzimuthAngle = 0.6;
-  controls.minPolarAngle = Math.PI * 0.3;
-  controls.maxPolarAngle = Math.PI * 0.56;
-  let dragging = false;
-  controls.addEventListener('start', () => { dragging = true; });
-  controls.addEventListener('end', () => { dragging = false; });
-  // On phones, dragging the canvas would trap page scrolling, so the scene only sways there.
-  if (coarsePointer) {
-    controls.enabled = false;
-    renderer.domElement.style.touchAction = 'pan-y';
-  }
+  // Drag to turn the system all the way around; it also spins on its own.
+  controls.minPolarAngle = Math.PI * 0.08;
+  controls.maxPolarAngle = Math.PI * 0.8;
+  controls.rotateSpeed = 0.8;
+  controls.autoRotate = !reduceMotion;
+  controls.autoRotateSpeed = 1.6;
+  // On phones, a sideways swipe turns the system while an up/down swipe still scrolls the page.
+  if (coarsePointer) renderer.domElement.style.touchAction = 'pan-y';
 
   // White key light plus two colored side lights give the parts depth and color.
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
@@ -295,7 +289,7 @@ function setupScene() {
 
     const bounds = new THREE.Box3().setFromObject(system);
 
-    // Every part has a small name label; the one the tour or a hover points at expands with a description.
+    // Every part has a small name label; hovering or tapping a part expands it with a description.
     for (const [id, info] of Object.entries(COMPONENTS)) {
       const box = new THREE.Box3();
       components[id].meshes.forEach((mesh) => box.expandByObject(mesh));
@@ -467,16 +461,13 @@ function setupScene() {
     paintNodes();
   }
 
-  // ---------- Highlight: guided tour, overridden by hover ----------
+  // ---------- Highlight on hover ----------
 
   let hovered = null;
-  let tourCurrent = null;
-  let tourIndex = -1;
-  let tourTimer = 1.2;
   let shown = null;
 
   function refreshHighlight() {
-    const active = hovered || tourCurrent;
+    const active = hovered;
     if (active === shown) return;
     if (shown) {
       const previous = world.components[shown].labelEl;
@@ -512,14 +503,11 @@ function setupScene() {
     setHovered(next);
   }
 
-  // Hovering takes over from the tour. When the pointer leaves a part its card disappears,
-  // and the tour stays quiet for a few seconds before it carries on.
-  const TOUR_PAUSE_AFTER_HOVER = 5;
-
+  // The description card shows only while a part is hovered (or tapped), and the spin pauses
+  // so the card stays readable.
   function setHovered(next) {
     hovered = next;
-    tourCurrent = null;
-    if (!hovered) tourTimer = TOUR_PAUSE_AFTER_HOVER;
+    controls.autoRotate = !reduceMotion && !hovered;
     renderer.domElement.style.cursor = hovered ? 'pointer' : '';
     refreshHighlight();
   }
@@ -564,6 +552,7 @@ function setupScene() {
   // ---------- Layout and rendering ----------
 
   const viewDirection = new THREE.Vector3(0.12, 0.28, 1).normalize();
+  let fitted = false;
 
   function resize() {
     const { clientWidth: w, clientHeight: h } = stage;
@@ -581,8 +570,7 @@ function setupScene() {
       shown = null;
       build();
       applyTheme();
-      // Keep the tour's current part highlighted across the rebuild.
-      refreshHighlight();
+      controls.autoRotate = !reduceMotion;
     }
 
     // Fit the camera so the whole system fills the panel.
@@ -591,8 +579,11 @@ function setupScene() {
     const center = fitBox.getCenter(new THREE.Vector3());
     const halfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const distance = Math.max((size.y / 2) / halfFov, (size.x / 2) / (halfFov * camera.aspect)) * 1.03 + size.z / 2;
+    // Keep whatever angle the visitor has turned to; only the first fit uses the default view.
+    const direction = fitted ? camera.position.clone().sub(controls.target).normalize() : viewDirection;
+    fitted = true;
     controls.target.copy(center);
-    camera.position.copy(center).addScaledVector(viewDirection, distance);
+    camera.position.copy(center).addScaledVector(direction, distance);
     controls.update();
     render();
   }
@@ -601,6 +592,10 @@ function setupScene() {
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
     if (!world) return;
+    // Seen from the side, every part lines up and the names pile on top of each other,
+    // so the small names fade out until the system turns back toward the front or back.
+    const sideOn = Math.abs(Math.sin(controls.getAzimuthalAngle())) > 0.7;
+    labelRenderer.domElement.classList.toggle('labels-faded', sideOn);
     for (const component of Object.values(world.components)) keepInsidePanel(component.labelEl);
     // The label renderer stacks labels by depth; keep the expanded card above its neighbours.
     if (shown) world.components[shown].labelEl.style.zIndex = '10000';
@@ -665,27 +660,12 @@ function setupScene() {
       if (nextFailureIn <= 0) failRandomReplica();
     }
 
-    if (!hovered) {
-      tourTimer -= dt;
-      if (tourTimer <= 0) {
-        tourIndex = (tourIndex + 1) % TOUR.length;
-        tourCurrent = TOUR[tourIndex];
-        tourTimer = 3.2;
-        refreshHighlight();
-      }
-    }
-
     for (const mesh of world.pickables) {
       mesh.scale.setScalar(THREE.MathUtils.lerp(mesh.scale.x, mesh.userData.targetScale, Math.min(1, dt * 10)));
     }
     world.components.gateway.meshes[0].rotation.y += dt * 0.4;
     world.components.clients.meshes.forEach((m, i) => { m.rotation.y += dt * (0.2 + i * 0.05); });
     world.components.workers.meshes.forEach((m) => { m.rotation.y -= dt * 0.5; });
-
-    // The whole system sways gently unless someone is hovering or dragging.
-    if (!hovered && !dragging) {
-      system.rotation.y = THREE.MathUtils.lerp(system.rotation.y, Math.sin(elapsed * 0.16) * 0.22, Math.min(1, dt * 2));
-    }
   }
 
   resize();

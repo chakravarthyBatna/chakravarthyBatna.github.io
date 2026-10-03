@@ -308,7 +308,7 @@ a {
   border-radius: 6px;
   background: color-mix(in srgb, var(--bg) 72%, transparent);
   text-align: center;
-  transition: padding 0.15s ease, border-color 0.15s ease;
+  transition: opacity 0.3s ease, padding 0.15s ease, border-color 0.15s ease;
 }
 
 .label-name {
@@ -327,7 +327,11 @@ a {
   color: var(--muted);
 }
 
-/* The part the tour or a hover points at gets a full card with its description. */
+.labels-faded .node-label:not(.is-active) {
+  opacity: 0;
+}
+
+/* The part being hovered or tapped gets a full card with its description. */
 .node-label.is-active {
   z-index: 5;
   padding: 8px 12px;
