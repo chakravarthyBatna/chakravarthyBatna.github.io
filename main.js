@@ -509,8 +509,17 @@ function setupScene() {
     const hit = raycaster.intersectObjects(world.pickables, false)[0];
     const next = hit ? hit.object.userData.component : null;
     if (next === hovered) return;
+    setHovered(next);
+  }
+
+  // Hovering takes over from the tour. When the pointer leaves a part its card disappears,
+  // and the tour stays quiet for a few seconds before it carries on.
+  const TOUR_PAUSE_AFTER_HOVER = 5;
+
+  function setHovered(next) {
     hovered = next;
-    if (!hovered) tourTimer = Math.max(tourTimer, 2);
+    tourCurrent = null;
+    if (!hovered) tourTimer = TOUR_PAUSE_AFTER_HOVER;
     renderer.domElement.style.cursor = hovered ? 'pointer' : '';
     refreshHighlight();
   }
@@ -518,9 +527,7 @@ function setupScene() {
   renderer.domElement.addEventListener('pointermove', pick);
   renderer.domElement.addEventListener('pointerdown', pick);
   renderer.domElement.addEventListener('pointerleave', () => {
-    hovered = null;
-    renderer.domElement.style.cursor = '';
-    refreshHighlight();
+    if (hovered) setHovered(null);
   });
 
   // ---------- Colors ----------
