@@ -877,8 +877,7 @@ p.prose {
   max-width: 820px;
 }
 
-.contact a,
-.contact-row {
+.contact a {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -895,10 +894,6 @@ p.prose {
 
 .contact a:hover {
   color: var(--accent);
-}
-
-.contact-row {
-  color: var(--muted);
 }
 
 .contact-note {
